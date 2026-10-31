@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* ───────────── Brand tokens (update here only) ───────────── */
+@theme {
+  --color-primary: #e9e02a;
+  --color-background: #060508;
+  --color-text-primary: #f6f2fa;
+  --color-purple: #66229f;
+  --color-grad-start: #e96ed8;
+  --color-grad-mid: #b72bca;
+  --color-grad-end: #62229d;
+  --color-surface: #0d0a12; /* dark tiles / pills */
+  --color-panel: #141019; /* mega menu panel */
+  --color-card: #f6f2fa; /* light cards */
+  --color-ink: #120e17; /* text on light cards */
+
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
+
+  /* Type scale from Figma (line-height 106%) */
+  --leading-figma: 1.06;
+  --text-display: clamp(2.5rem, 2vw + 1.6rem, 3.75rem); /* 60px on desktop */
+  --text-display--line-height: 1.06;
+  --text-body: 0.875rem; /* 14px */
+  --text-body--line-height: 1.06;
+
+  --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-float-slow: float 13s ease-in-out infinite;
+
+  @keyframes marquee-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(calc(-50% - 6px)); }
+  }
+  @keyframes marquee-down {
+    from { transform: translateY(calc(-50% - 6px)); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes marquee-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-100% - 3rem)); }
+  }
+  @keyframes marquee-right {
+    from { transform: translateX(calc(-100% - 3rem)); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes shake {
+    0% { transform: translate(0, 0) rotate(0); }
+    25% { transform: translate(-2px, 1px) rotate(-0.4deg); }
+    50% { transform: translate(2px, -1px) rotate(0.4deg); }
+    75% { transform: translate(-1px, -2px) rotate(0); }
+    100% { transform: translate(0, 0) rotate(0); }
+  }
+
+  @keyframes eq {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.55); }
+  }
+
+  @keyframes sweep {
+    0%, 70% { left: -35%; }
+    100% { left: 135%; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50% { transform: translate3d(0, -18px, 0) rotate(2.5deg); }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--color-grad-mid);
+    color: var(--color-text-primary);
+  }
+}
+
+@layer utilities {
+  .bg-brand-gradient {
+    background: linear-gradient(270deg, #e96ed8 0%, #b72bca 50.12%, #62229d 100%);
+  }
+  .text-brand-gradient {
+    background: linear-gradient(270deg, #e96ed8 0%, #b72bca 50.12%, #62229d 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .container-site {
+    width: 100%;
+    max-width: 1440px; /* 1280px content + 80px gutters (Figma 1920 frame) */
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 5.5vw, 5rem);
+  }
+}
+
+/* Accessibility: users who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
