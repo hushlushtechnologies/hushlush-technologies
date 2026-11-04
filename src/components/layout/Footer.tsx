@@ -14,7 +14,7 @@ const COPYRIGHT_YEAR = 2026; // update yearly (a live date would break static pr
 
 const EXPLORE = [
   { label: "Home", href: "/" },
-  { label: "Service", href: "/services" },
+  { label: "Service", href: "/#services" },
   { label: "Work", href: "/#showcase" },
   { label: "About", href: "/about" },
 ];

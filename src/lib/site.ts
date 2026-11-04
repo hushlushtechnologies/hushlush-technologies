@@ -12,6 +12,15 @@ export const siteConfig = {
     address: "Office No. 501 Al Zarouni Business Center, Al Barsha 1, Sheikh Zayed Road, Dubai",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Al+Zarouni+Business+Center+Al+Barsha+1+Dubai",
   },
+  /**
+   * Where career applications are sent. Any form service that accepts multipart POST works
+   * (e.g. Formspree "https://formspree.io/f/xxxx", Web3Forms, or your own API route).
+   * Leave empty to fall back to opening the visitor's email app.
+   */
+  careersFormEndpoint: "",
+  /** Where "Start The Project" enquiries are sent (same options as above). Empty → opens the email app. */
+  enquiryFormEndpoint: "",
+  careersEmail: "careers@hushlushtechnologies.com", // TODO: confirm
   socials: {
     instagram: "",
     youtube: "",

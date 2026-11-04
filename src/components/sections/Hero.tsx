@@ -596,7 +596,10 @@ export default function Hero() {
                 variants={intro}
                 className="flex flex-col items-center gap-10 sm:flex-row sm:items-end sm:justify-between lg:justify-end lg:gap-[42px]"
               >
-                <SocialCluster />
+                {/* on small laptops (1024–1279) there isn't room for all three blocks in one row */}
+                <div className="lg:max-xl:hidden">
+                  <SocialCluster />
+                </div>
                 <StoryCard />
               </motion.div>
             </motion.div>

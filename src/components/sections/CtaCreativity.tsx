@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -13,12 +13,38 @@ import {
   type MotionValue,
   type Variants,
 } from "motion/react";
+import { cn } from "@/lib/utils";
 import { ArrowRight } from "@/components/ui/icons";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const PARAGRAPH =
-  "We Are A Creative Technology Company Bringing Strategy, Design, Media And Digital Experiences Together To Help Ambitious Brands Move Forward.".split(" ");
+type Props = {
+  id?: string;
+  /** optional centred section title above the content ("Who We Are?") */
+  title?: string;
+  headline?: [string, string];
+  paragraph?: string;
+  primary?: { label: string; href: string };
+  secondary?: { label: string; href: string };
+  checklist?: string[];
+  /** extra content rendered at the bottom of the section (inside it) */
+  children?: React.ReactNode;
+};
+
+const DEFAULTS = {
+  id: "creativity",
+  headline: ["Creativity", "Without Limits."] as [string, string],
+  paragraph:
+    "We Are A Creative Technology Company Bringing Strategy, Design, Media And Digital Experiences Together To Help Ambitious Brands Move Forward.",
+  primary: { label: "Learn More", href: "/about" },
+  secondary: { label: "Start The Project", href: "/contact" },
+};
+
+const Check = () => (
+  <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+);
 
 function Word({ w, i, n, progress }: { w: string; i: number; n: number; progress: MotionValue<number> }) {
   const opacity = useTransform(progress, [i / n, (i + 1) / n], [0.2, 1]);
@@ -34,7 +60,20 @@ const fadeUp: Variants = {
   show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.9, ease: EASE } },
 };
 
-export default function CtaCreativity() {
+export default function CtaCreativity({
+  id = DEFAULTS.id,
+  title,
+  headline = DEFAULTS.headline,
+  paragraph = DEFAULTS.paragraph,
+  primary = DEFAULTS.primary,
+  secondary = DEFAULTS.secondary,
+  checklist,
+  children,
+}: Props = {}) {
+  const PARAGRAPH = paragraph.split(" ");
+  const titleId = `${id}-title`;
+  // with a section title the big headline becomes a sub-heading
+  const Heading = title ? motion.h3 : motion.h2;
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const reduce = useReducedMotion();
@@ -59,8 +98,20 @@ export default function CtaCreativity() {
   const glassX = useTransform(p, [0, 1], reduce ? [0, 0] : [-120, 60]);
   const glassOpacity = useTransform(p, [0.1, 0.35], [0, 1]);
 
-  // headline drifts slightly
-  const headX = useTransform(p, [0, 1], reduce ? [0, 0] : [-30, 20]);
+  // headline drifts slightly (desktop only — on phones it would slide off the edge)
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const on = () => setWide(mq.matches);
+    const raf = requestAnimationFrame(on);
+    mq.addEventListener("change", on);
+    return () => {
+      cancelAnimationFrame(raf);
+      mq.removeEventListener("change", on);
+    };
+  }, []);
+  const headXRaw = useTransform(p, [0, 1], reduce ? [0, 0] : [-30, 20]);
+  const headX = useTransform(() => (wide ? headXRaw.get() : 0));
 
   // paragraph lights up word by word
   const { scrollYProgress: textP } = useScroll({ target: textRef, offset: ["start 0.85", "end 0.5"] });
@@ -83,7 +134,19 @@ export default function CtaCreativity() {
   }, [mx, my, reduce]);
 
   return (
-    <section ref={sectionRef} id="creativity" aria-labelledby="creativity-title" className="relative overflow-hidden py-24 lg:py-[170px]">
+    <section ref={sectionRef} id={id} aria-labelledby={titleId} className={cn("relative scroll-mt-20 overflow-hidden py-24 lg:py-[150px]", children && "!pb-0")}>
+      {title && (
+        <motion.h2
+          id={titleId}
+          initial={{ opacity: 0, y: 40, letterSpacing: "0.2em" }}
+          whileInView={{ opacity: 1, y: 0, letterSpacing: "0em" }}
+          viewport={{ once: true, margin: "-15%" }}
+          transition={{ duration: 1.1, ease: EASE }}
+          className="container-site mb-16 text-center font-display text-[clamp(2.75rem,4vw,4.5rem)] font-bold leading-none lg:mb-[100px]"
+        >
+          {title}
+        </motion.h2>
+      )}
       <div className="container-site grid items-center gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,505px)] lg:gap-10">
         {/* Copy */}
         <motion.div
@@ -93,22 +156,22 @@ export default function CtaCreativity() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }}
           className="relative z-10"
         >
-          <motion.h2
-            id="creativity-title"
+          <Heading
+            id={title ? undefined : titleId}
             style={{ x: headX }}
             className="font-display text-[clamp(2.75rem,4.2vw,5rem)] font-bold uppercase leading-[1.02]"
           >
             <span className="block overflow-hidden pb-1">
               <motion.span variants={line} className="block origin-bottom-left">
-                Creativity
+                {headline[0]}
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-1">
               <motion.span variants={line} className="block origin-bottom-left">
-                Without Limits.
+                {headline[1]}
               </motion.span>
             </span>
-          </motion.h2>
+          </Heading>
 
           <p ref={textRef} className="mt-10 max-w-[610px] text-[clamp(1.25rem,1.4vw+0.5rem,2.125rem)] leading-[1.02]">
             {PARAGRAPH.map((w, i) => (
@@ -118,22 +181,42 @@ export default function CtaCreativity() {
 
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-4 lg:mt-[42px]">
             <Link
-              href="/about"
+              href={primary.href}
               className="group inline-flex h-[49px] items-center gap-7 rounded-full border border-white/10 bg-surface/80 pl-6 pr-[5px] text-base font-medium transition-colors duration-300 hover:border-grad-mid/50"
             >
-              Learn More
+              {primary.label}
               <span className="bg-brand-gradient grid h-[39px] w-[55px] place-items-center rounded-full transition-all duration-500 ease-cinematic group-hover:w-[64px] group-hover:shadow-[0_0_24px_rgba(233,110,216,0.7)]">
                 <ArrowRight className="size-5 transition-transform duration-500 ease-cinematic group-hover:translate-x-1" />
               </span>
             </Link>
             <Link
-              href="/contact"
+              href={secondary.href}
               className="bg-brand-gradient group relative inline-flex h-[49px] items-center overflow-hidden rounded-full px-[34px] text-base font-medium shadow-[0_10px_40px_-12px_rgba(183,43,202,0.7)] transition-shadow duration-500 hover:shadow-[0_0_40px_rgba(233,110,216,0.8)]"
             >
               <span className="absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/25 blur-sm transition-[left] duration-700 ease-cinematic group-hover:left-[120%]" />
-              <span className="relative">Start The Project</span>
+              <span className="relative">{secondary.label}</span>
             </Link>
           </motion.div>
+
+          {checklist && (
+            <motion.ul
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+              className="mt-8 flex flex-wrap gap-x-5 gap-y-3"
+            >
+              {checklist.map((c) => (
+                <motion.li
+                  key={c}
+                  variants={{ hidden: { opacity: 0, scale: 0.6, y: 10 }, show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+                  className="group flex items-center gap-2.5 text-base text-text-primary/90"
+                >
+                  <span className="grid size-6 place-items-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/30 transition-all duration-300 group-hover:bg-primary group-hover:text-ink group-hover:shadow-[0_0_14px_rgba(233,224,42,0.6)]">
+                    <Check />
+                  </span>
+                  {c}
+                </motion.li>
+              ))}
+            </motion.ul>
+          )}
         </motion.div>
 
         {/* Visual */}
@@ -163,6 +246,7 @@ export default function CtaCreativity() {
           </motion.div>
         </div>
       </div>
+      {children}
     </section>
   );
 }

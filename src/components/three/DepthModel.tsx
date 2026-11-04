@@ -27,6 +27,11 @@ export type DepthModelConfig = {
   rotY: [number, number];
   rotX: [number, number];
   scale?: [number, number];
+  /** lighting: base brightness and how much the moving light adds */
+  ambient?: number;
+  diffuse?: number;
+  /** fade the top edge (0–1 of height) */
+  topFade?: number;
   /** fade the bottom edge (0–1 of height) */
   bottomFade?: number;
   /** extra canvas width so the model never clips while rotating */
@@ -53,10 +58,14 @@ uniform vec2 uTexel;
 uniform vec3 uLight;
 uniform float uGlow;
 uniform float uFade;
+uniform float uTopFade;
+uniform float uAmbient;
+uniform float uDiffuse;
 varying vec2 vUv;
 void main() {
   vec4 c = texture2D(uColor, vUv);
   c.a *= smoothstep(0.0, uFade + 0.0001, vUv.y);
+  c.a *= 1.0 - smoothstep(1.0 - uTopFade - 0.0001, 1.0, vUv.y);
   if (c.a < 0.04) discard;
   // surface normal from the depth map → real-looking light as the model turns
   float dx = texture2D(uDepth, vUv + vec2(uTexel.x, 0.0)).r - texture2D(uDepth, vUv - vec2(uTexel.x, 0.0)).r;
@@ -64,7 +73,7 @@ void main() {
   vec3 n = normalize(vec3(-dx * 7.0, -dy * 7.0, 1.0));
   float diff = max(dot(n, normalize(uLight)), 0.0);
   float rim = pow(1.0 - n.z, 2.0);
-  vec3 col = c.rgb * (0.72 + 0.48 * diff) + vec3(0.72, 0.30, 0.95) * rim * 0.55 * uGlow;
+  vec3 col = c.rgb * (uAmbient + uDiffuse * diff) + vec3(0.72, 0.30, 0.95) * rim * 0.55 * uGlow;
   gl_FragColor = vec4(col, c.a);
 }`;
 
@@ -75,7 +84,7 @@ type Props = {
 };
 
 export function DepthModel({ progress, className, config }: Props & { config: DepthModelConfig }) {
-  const { src, depthSrc, alt, aspect: IMG_ASPECT, depthSize, strength = 0.42, rotY, rotX, scale = [0.86, 1.03], bottomFade = 0, widen: CANVAS_WIDEN = 1.7, sizes } = config;
+  const { src, depthSrc, alt, aspect: IMG_ASPECT, depthSize, strength = 0.42, rotY, rotX, scale = [0.86, 1.03], ambient = 0.72, diffuse = 0.48, bottomFade = 0, topFade = 0, widen: CANVAS_WIDEN = 1.7, sizes } = config;
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
@@ -112,11 +121,15 @@ export function DepthModel({ progress, className, config }: Props & { config: De
       ]);
       if (disposed) return;
       colorTex.colorSpace = THREE.NoColorSpace;
-      colorTex.anisotropy = 4;
+      // crisp at any size: mipmaps for downscaling, max anisotropy for tilted views
+      colorTex.generateMipmaps = true;
+      colorTex.minFilter = THREE.LinearMipmapLinearFilter;
+      colorTex.magFilter = THREE.LinearFilter;
+      colorTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
       const scene = new THREE.Scene();
       const cam = new THREE.PerspectiveCamera(26, 1, 0.1, 20);
-      const geo = new THREE.PlaneGeometry(1, IMG_ASPECT, 180, 320);
+      const geo = new THREE.PlaneGeometry(1, IMG_ASPECT, 240, Math.round(240 * IMG_ASPECT));
       const mat = new THREE.ShaderMaterial({
         vertexShader: VERT,
         fragmentShader: FRAG,
@@ -127,6 +140,9 @@ export function DepthModel({ progress, className, config }: Props & { config: De
           uTexel: { value: new THREE.Vector2(1 / depthSize[0], 1 / depthSize[1]) },
           uStrength: { value: strength },
           uFade: { value: bottomFade },
+          uTopFade: { value: topFade },
+          uAmbient: { value: ambient },
+          uDiffuse: { value: diffuse },
           uLight: { value: new THREE.Vector3(0, 0.5, 1) },
           uGlow: { value: 1 },
         },

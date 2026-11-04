@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   motion,
   useInView,
-  useMotionValue,
-  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -166,144 +164,10 @@ function Lightning({
   );
 }
 
-/* ───────────────────────── Brain blast particles (scroll-scrubbed) ───────────────────────── */
-
-/** Blast origin in the 736×736 image (centre of the brain) */
-const ORIGIN = { x: 0.69, y: 0.3 };
-/*
- * Timeline (desktop, pinned section, p: 0 → 1)
- *   0.00 – 0.06  bulb sits centre stage, big
- *   0.06 – 0.22  charging: rapid lightning, shake, glow builds
- *   0.22 – 0.44  BLAST: flash, shockwaves, sparks
- *   0.42 – 0.62  bulb glides right into its column
- *   0.50 – 0.70  offer copy reveals on the left
- *   0.70 – 1.00  hold
- */
-const CHARGE: [number, number] = [0.06, 0.22];
-const BLAST: [number, number] = [0.22, 0.44];
-const MOVE: [number, number] = [0.42, 0.62];
-export const TEXT_IN: [number, number] = [0.5, 0.7];
-
-type Spark = {
-  a: number;
-  v: number;
-  size: number;
-  color: string;
-  wob: number;
-  delay: number;
-};
-const SPARKS: Spark[] = (() => {
-  let seed = 7;
-  const r = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-  const colors = ["#e96ed8", "#b72bca", "#f6f2fa", "#e9e02a", "#9b5cf0"];
-  return Array.from({ length: 220 }, () => ({
-    a: r() * Math.PI * 2,
-    v: 0.25 + r() * 0.85,
-    size: 1.2 + r() * 3.2,
-    color: colors[Math.floor(r() * colors.length)],
-    wob: (r() - 0.5) * 1.2,
-    delay: r() * 0.18,
-  }));
-})();
-
-const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-
-function BlastCanvas({ progress }: { progress: MotionValue<number> }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-
-  const draw = (p: number) => {
-    const c = ref.current;
-    if (!c) return;
-    const w = c.clientWidth;
-    const h = c.clientHeight;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    if (c.width !== Math.round(w * dpr)) {
-      c.width = Math.round(w * dpr);
-      c.height = Math.round(h * dpr);
-    }
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-
-    const t = (p - BLAST[0]) / (BLAST[1] - BLAST[0]);
-    if (t <= 0 || t >= 1.4) return;
-    // canvas is 2× the bulb box, centred on it
-    const ox = w * 0.25 + ORIGIN.x * w * 0.5;
-    const oy = h * 0.25 + ORIGIN.y * h * 0.5;
-    const R = Math.min(w, h) * 0.5;
-
-    ctx.globalCompositeOperation = "lighter";
-    const pts: [number, number, number][] = [];
-    for (const s of SPARKS) {
-      const lt = Math.min(1, Math.max(0, (t - s.delay) / (1 - s.delay)));
-      if (lt <= 0) continue;
-      const d = easeOut(lt) * R * s.v;
-      const ang = s.a + s.wob * lt;
-      const x = ox + Math.cos(ang) * d;
-      const y = oy + Math.sin(ang) * d * 0.85;
-      const alpha =
-        Math.max(0, 1 - lt * 0.85) * (t > 1 ? Math.max(0, 1.4 - t) / 0.4 : 1);
-      // streak
-      const tail = Math.max(0, d - 26 * (1 - lt));
-      ctx.strokeStyle = s.color;
-      ctx.globalAlpha = alpha * 0.55;
-      ctx.lineWidth = s.size * 0.6;
-      ctx.beginPath();
-      ctx.moveTo(ox + Math.cos(ang) * tail, oy + Math.sin(ang) * tail * 0.85);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-      // head
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = s.color;
-      ctx.beginPath();
-      ctx.arc(x, y, s.size, 0, Math.PI * 2);
-      ctx.fill();
-      pts.push([x, y, alpha]);
-    }
-    // neural links between nearby sparks (ideas connecting)
-    if (t > 0.3) {
-      ctx.strokeStyle = "#c48cff";
-      ctx.lineWidth = 0.6;
-      for (let i = 0; i < pts.length; i += 2) {
-        for (let j = i + 1; j < pts.length; j += 3) {
-          const dx = pts[i][0] - pts[j][0];
-          const dy = pts[i][1] - pts[j][1];
-          const dd = dx * dx + dy * dy;
-          if (dd < 3600) {
-            ctx.globalAlpha =
-              Math.min(pts[i][2], pts[j][2]) * (1 - dd / 3600) * 0.6;
-            ctx.beginPath();
-            ctx.moveTo(pts[i][0], pts[i][1]);
-            ctx.lineTo(pts[j][0], pts[j][1]);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = "source-over";
-  };
-
-  useMotionValueEvent(progress, "change", draw);
-  useEffect(() => {
-    draw(progress.get());
-    const onResize = () => draw(progress.get());
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <canvas
-      ref={ref}
-      aria-hidden
-      className="pointer-events-none absolute -inset-1/2 z-20 size-[200%]"
-    />
-  );
-}
-
 /* ───────────────────────── Brain bulb visual ───────────────────────── */
+
+/** Centre of the brain in the 736×736 image */
+const ORIGIN = { x: 0.69, y: 0.3 };
 
 const BULB: DepthModelConfig = {
   src: "/images/offer/brain-bulb.webp",
@@ -319,177 +183,65 @@ const BULB: DepthModelConfig = {
   sizes: "(min-width: 1024px) 733px, 90vw",
 };
 
-function BrainBulb({
-  progress: timeline,
-  desktop,
-}: {
-  progress: MotionValue<number>;
-  desktop: boolean;
-}) {
+function BrainBulb({ progress }: { progress: MotionValue<number> }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = !!useReducedMotion();
   const inView = useInView(ref, { margin: "0px" });
   const [surge, setSurge] = useState(false);
-  const [phase, setPhase] = useState<"idle" | "charge" | "blast">("idle");
 
-  // Mobile: no pinning — run charge + blast while the bulb crosses the middle of the screen
-  const { scrollYProgress: pass } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-  const mobileP = useTransform(pass, [0.2, 0.62], [0, 0.5]);
-  const progress = useTransform(() =>
-    reduce ? 0.9 : desktop ? timeline.get() : mobileP.get(),
-  );
-  useMotionValueEvent(progress, "change", (v) => {
-    setPhase(
-      v >= CHARGE[0] && v < BLAST[0]
-        ? "charge"
-        : v >= BLAST[0] && v < BLAST[0] + 0.06
-          ? "blast"
-          : "idle",
-    );
-  });
-
-  /* Desktop: starts centre stage, then glides right into its column */
-  const dx = useMotionValue(0); // px from the bulb's column to the section centre
-  useEffect(() => {
-    const measure = () => {
-      const col = ref.current?.parentElement;
-      const section = ref.current?.closest("section");
-      if (!col || !section) return;
-      const c = col.getBoundingClientRect();
-      const s = section.getBoundingClientRect();
-      // centre the bulb itself (it sits right of the image's middle), not just its box
-      dx.set(
-        s.left +
-          s.width / 2 -
-          (c.left + c.width / 2) -
-          (ORIGIN.x - 0.5) * c.width,
-      );
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [dx, desktop]);
-  const atCentre = useTransform(progress, MOVE, [1, 0], {
-    ease: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
-  });
-  const x = useTransform(() =>
-    desktop && !reduce ? atCentre.get() * dx.get() : 0,
-  );
-  const scale = useTransform(() =>
-    desktop && !reduce ? 1 + atCentre.get() * 0.2 : 1,
-  );
-  const y = useTransform(() => 0);
-
-  // charge → energy builds; blast → flash, shockwave, recoil
-  const charge = useTransform(progress, [CHARGE[0], BLAST[0]], [0, 1]);
-  const flash = useTransform(
-    progress,
-    [BLAST[0] - 0.01, BLAST[0] + 0.015, BLAST[0] + 0.09],
-    [0, 1, 0],
-  );
-  const recoil = useTransform(
-    progress,
-    [BLAST[0], BLAST[0] + 0.03, BLAST[0] + 0.12],
-    [1, 0.9, 1],
-  );
+  /* Scroll story (progress = section passing through the screen, 0 → 1):
+     rises in from below and powers up → turns in 3D at the centre → drifts up and dims on exit */
+  const y = useTransform(progress, [0, 0.4, 1], reduce ? [0, 0, 0] : [140, 0, -80]);
+  const scale = useTransform(progress, [0, 0.4, 1], reduce ? [1, 1, 1] : [0.78, 1, 0.94]);
+  const rotate = useTransform(progress, [0, 0.4, 1], reduce ? [0, 0, 0] : [-10, 0, 6]);
+  const power = useTransform(progress, [0.08, 0.42], [0, 1]); // lights up as it arrives
   const bulbFilter = useTransform(
-    [charge, flash] as MotionValue<number>[],
-    ([c, f]: number[]) =>
-      `brightness(${1 + c * 0.35 + f * 1.2}) saturate(${1 + c * 0.4}) drop-shadow(0 0 ${18 + c * 30 + f * 60}px rgba(233,110,216,${0.25 + c * 0.35}))`,
+    power,
+    (c) => `brightness(${0.55 + c * 0.5}) saturate(${0.6 + c * 0.6}) blur(${(1 - c) * 6}px) drop-shadow(0 0 ${10 + c * 34}px rgba(233,110,216,${0.15 + c * 0.4}))`,
   );
-  const glowScale = useTransform(
-    [charge, flash] as MotionValue<number>[],
-    ([c, f]: number[]) => 1 + c * 0.3 + f * 0.6,
-  );
-  const glowOpacity = useTransform(
-    [charge, flash] as MotionValue<number>[],
-    ([c, f]: number[]) => 0.5 + c * 0.4 + f * 0.1,
-  );
-  const ring = useTransform(progress, BLAST, [0, 1]);
-  const ringScale = useTransform(ring, [0, 1], [0.2, 3.2]);
-  const ringOpacity = useTransform(ring, [0, 0.08, 1], [0, 0.9, 0]);
-  const ring2Scale = useTransform(ring, [0.1, 1], [0.2, 2.4]);
-  const ring2Opacity = useTransform(ring, [0.1, 0.2, 1], [0, 0.6, 0]);
+  const glowScale = useTransform(progress, [0.05, 0.45, 1], [0.5, 1.1, 0.9]);
+  const glowOpacity = useTransform(progress, [0.05, 0.45, 0.9], [0, 0.95, 0.6]);
+  // orbit ring sweeps round the bulb as you scroll
+  const orbit = useTransform(progress, [0, 1], [-40, 220]);
+  const orbitOpacity = useTransform(progress, [0.15, 0.4, 0.85, 1], [0, 1, 1, 0]);
 
   return (
     <motion.div
       ref={ref}
-      style={{ scale, y, x }}
+      style={{ y, scale, rotate }}
       className="relative mx-auto aspect-square w-full max-w-[520px] lg:max-w-none"
     >
-      {/* Glow behind the bulb — breathes, builds while charging, flares on blast */}
+      {/* Glow behind the bulb — grows as it powers up */}
       <motion.div
         aria-hidden
         style={{ scale: glowScale, opacity: glowOpacity }}
-        className="absolute left-[46%] top-[6%] size-[50%] rounded-full bg-[radial-gradient(closest-side,rgba(183,43,202,0.65),transparent)] blur-2xl"
+        className="absolute left-[40%] top-[2%] size-[60%] rounded-full bg-[radial-gradient(closest-side,rgba(183,43,202,0.7),transparent)] blur-2xl"
       />
 
-      {/* Shockwave rings */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute z-10"
-        style={{ left: `${ORIGIN.x * 100}%`, top: `${ORIGIN.y * 100}%` }}
-      >
-        <motion.span
-          style={{ scale: ringScale, opacity: ringOpacity }}
-          className="absolute -left-[110px] -top-[110px] size-[220px] rounded-full border-2 border-grad-start shadow-[0_0_40px_rgba(233,110,216,0.8),inset_0_0_40px_rgba(233,110,216,0.5)]"
-        />
-        <motion.span
-          style={{ scale: ring2Scale, opacity: ring2Opacity }}
-          className="absolute -left-[110px] -top-[110px] size-[220px] rounded-full border border-primary/80"
-        />
-      </div>
-
-      {/* 3D bulb (relief model) — shakes while charging */}
+      {/* Energy orbit around the bulb */}
       <motion.div
-        style={{ filter: bulbFilter, scale: recoil }}
-        className={
-          phase === "charge" && !reduce
-            ? "relative size-full animate-[shake_0.18s_linear_infinite]"
-            : "relative size-full"
-        }
+        aria-hidden
+        style={{ rotate: orbit, opacity: orbitOpacity, left: `${ORIGIN.x * 100}%`, top: `${ORIGIN.y * 100 + 6}%` }}
+        className="pointer-events-none absolute z-10 size-[62%] -translate-x-1/2 -translate-y-1/2"
       >
+        <span className="absolute inset-0 rounded-full border border-grad-start/30 [transform:rotateX(70deg)]" />
+        <span className="absolute left-1/2 top-0 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_14px_4px_rgba(233,110,216,0.9)]" />
+      </motion.div>
+
+      {/* 3D bulb (relief model) — turns with scroll and the mouse */}
+      <motion.div style={{ filter: bulbFilter }} className="relative size-full">
         <div className="relative size-full animate-[float_7s_ease-in-out_infinite] motion-reduce:animate-none">
           <DepthModel progress={progress} config={BULB} />
           {/* filament core */}
           <motion.div
             aria-hidden
             className="absolute left-[63%] top-[48%] size-[16%] rounded-full bg-[radial-gradient(closest-side,rgba(255,220,255,0.9),rgba(233,110,216,0.4)_45%,transparent)] mix-blend-screen blur-md"
-            animate={{
-              opacity:
-                surge || phase !== "idle"
-                  ? [0.6, 1, 0.7, 1]
-                  : [0.25, 0.45, 0.3, 0.5, 0.25],
-            }}
-            transition={{
-              duration: surge || phase !== "idle" ? 0.25 : 3,
-              repeat: Infinity,
-            }}
+            animate={{ opacity: surge ? [0.6, 1, 0.7, 1] : [0.25, 0.45, 0.3, 0.5, 0.25] }}
+            transition={{ duration: surge ? 0.25 : 3, repeat: Infinity }}
           />
-          <Lightning
-            active={inView && !reduce}
-            fast={phase === "charge"}
-            onSurge={setSurge}
-          />
+          <Lightning active={inView && !reduce} fast={false} onSurge={setSurge} />
         </div>
       </motion.div>
-
-      {/* Particle blast */}
-      {!reduce && <BlastCanvas progress={progress} />}
-
-      {/* White flash */}
-      <motion.div
-        aria-hidden
-        style={{
-          opacity: flash,
-          left: `${ORIGIN.x * 100}%`,
-          top: `${ORIGIN.y * 100}%`,
-        }}
-        className="pointer-events-none absolute z-30 size-[140%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(255,240,255,0.95),rgba(233,110,216,0.5)_35%,transparent_70%)] mix-blend-screen"
-      />
     </motion.div>
   );
 }
@@ -546,49 +298,24 @@ export default function Offer() {
   const reduce = useReducedMotion();
   const copyRef = useRef<HTMLDivElement>(null);
 
-  // Desktop pins the section so the blast → reveal sequence plays out calmly
-  const [desktop, setDesktop] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setDesktop(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
+  // Not pinned: everything plays as the section scrolls through the screen
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start start", "end end"],
+    offset: ["start end", "end start"],
   });
-  const progress = useTransform(scrollYProgress, (v) => (reduce ? 1 : v));
-  const headlineX = useTransform(
-    progress,
-    [TEXT_IN[0], 1],
-    reduce ? [0, 0] : [-40, 20],
-  );
-  const glowY = useTransform(
-    progress,
-    [0, 1],
-    reduce ? ["0%", "0%"] : ["-6%", "6%"],
-  );
-
-  // Copy: hidden while the bulb is centre stage, revealed once it moves right
-  const textK = useTransform(progress, TEXT_IN, [0, 1]);
-  const copyOpacity = useTransform(() => (desktop ? textK.get() : 1));
-  const copyX = useTransform(() => (desktop ? (1 - textK.get()) * -60 : 0));
-  const [textShown, setTextShown] = useState(false);
-  useMotionValueEvent(textK, "change", (v) => desktop && setTextShown(v > 0.1));
-  const copyInView = useInView(copyRef, { once: true, margin: "-15%" });
-  const showCopy = desktop ? textShown || !!reduce : copyInView;
+  const progress = useTransform(scrollYProgress, (v) => (reduce ? 0.45 : v));
+  const glowY = useTransform(progress, [0, 1], reduce ? ["0%", "0%"] : ["-10%", "10%"]);
+  const copyY = useTransform(progress, [0, 1], reduce ? [0, 0] : [40, -40]);
+  const showCopy = useInView(copyRef, { once: true, margin: "-15%" });
 
   return (
     <section
       ref={sectionRef}
       id="offer"
       aria-labelledby="offer-title"
-      className="relative py-24 lg:h-[300vh] lg:py-0"
+      className="relative overflow-hidden py-24 lg:py-[clamp(6rem,9vw,10rem)]"
     >
-      <div className="relative lg:sticky lg:top-0 lg:h-dvh lg:min-h-[760px] lg:overflow-hidden">
+      <div className="relative">
         {/* Background */}
         <motion.div
           aria-hidden
@@ -596,14 +323,14 @@ export default function Offer() {
           className="absolute inset-0 bg-[radial-gradient(55%_65%_at_25%_55%,rgba(102,34,159,0.55),transparent_70%),radial-gradient(40%_50%_at_10%_10%,rgba(60,20,100,0.4),transparent_70%)]"
         />
 
-        <div className="container-site relative grid items-center gap-12 lg:h-full lg:grid-cols-[1fr_minmax(0,733px)] lg:gap-0 lg:pt-16">
+        <div className="container-site relative grid items-center gap-12 lg:grid-cols-[1fr_minmax(0,733px)] lg:gap-0">
           {/* Copy */}
           <motion.div
             ref={copyRef}
             variants={stagger}
             initial="hidden"
             animate={showCopy ? "show" : "hidden"}
-            style={{ opacity: copyOpacity, x: copyX }}
+            style={{ y: copyY }}
             className="relative z-10 lg:-mr-40 lg:pb-10"
           >
             <motion.p
@@ -628,8 +355,7 @@ export default function Offer() {
 
               <motion.h2
                 id="offer-title"
-                style={{ x: headlineX }}
-                className="relative font-display text-[clamp(2.75rem,5.8vw,5.25rem)] font-bold uppercase leading-[1.02]"
+                                className="relative font-display text-[clamp(2.75rem,5.8vw,5.25rem)] font-bold uppercase leading-[1.02]"
               >
                 <span className="block overflow-hidden pb-1">
                   <motion.span variants={line} className="block">
@@ -706,7 +432,7 @@ export default function Offer() {
 
           {/* Visual */}
           <div className="relative z-20 lg:-mt-10">
-            <BrainBulb progress={progress} desktop={desktop} />
+            <BrainBulb progress={progress} />
           </div>
         </div>
       </div>

@@ -47,6 +47,16 @@
     to { transform: translateX(0); }
   }
 
+  @keyframes shimmer {
+    0%, 55% { background-position: 150% 0; }
+    100% { background-position: -50% 0; }
+  }
+
+  @keyframes scrollcue {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(200%); }
+  }
+
   @keyframes shake {
     0% { transform: translate(0, 0) rotate(0); }
     25% { transform: translate(-2px, 1px) rotate(-0.4deg); }
@@ -60,6 +70,19 @@
     50% { transform: scaleY(0.55); }
   }
 
+  @keyframes gridflow {
+    to { background-position: 0 44px; }
+  }
+  @keyframes screenscan {
+    to { transform: translateY(400%); }
+  }
+  @keyframes ants {
+    to { stroke-dashoffset: -30; }
+  }
+  @keyframes iris {
+    0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+    50% { filter: hue-rotate(-28deg) saturate(1.2); }
+  }
   @keyframes sweep {
     0%, 70% { left: -35%; }
     100% { left: 135%; }
@@ -77,8 +100,17 @@
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
   }
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     font-family: var(--font-sans), system-ui, sans-serif;
+  }
+  /* Nothing may push the page wider than the screen (phones would zoom out).
+     clip (not hidden) keeps sticky/pinned sections working. */
+  main section,
+  footer {
     overflow-x: clip;
   }
   ::selection {

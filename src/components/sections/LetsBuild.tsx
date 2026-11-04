@@ -26,7 +26,21 @@ const Y = (v: number) => `${((v / FH) * 100).toFixed(3)}%`;
 const LEFT_LINE = "M515 371 L515 455 Q515 513 573 513 L776 513";
 const RIGHT_LINE = "M1144 513 L1345 513 Q1405 513 1405 573 L1405 710";
 
-const PARAGRAPH = "Have A Brand To Build, A Product To Launch, Or An Experience To Create? Let's Make It Happen.".split(" ");
+const BRANCH_LINE = "M1408 406 L1408 453 Q1408 513 1348 513";
+
+type Props = {
+  id?: string;
+  lines?: string[];
+  /** headline size in container-width units (design: 4.2 for big, 2.2 for small) */
+  headlineSize?: number;
+  /** optional yellow statement on the right ("We Want To Build It") */
+  accent?: string;
+  paragraph?: string;
+  /** main gradient button */
+  cta?: { label: string; href: string };
+  /** where "Explore Our Service" points (use "/#services" off the home page) */
+  servicesHref?: string;
+};
 
 /* ───────────────────────── Wireframe flower (generated) ───────────────────────── */
 
@@ -101,14 +115,14 @@ function GradientBorderPill({ href, children }: { href: string; children: React.
   );
 }
 
-function StartButton() {
+function StartButton({ cta = { label: "Start The Project", href: "/contact" } }: { cta?: { label: string; href: string } }) {
   return (
     <Link
-      href="/contact"
+      href={cta.href}
       className="bg-brand-gradient group relative inline-flex h-[49px] w-fit items-center overflow-hidden rounded-full px-[34px] text-base font-medium shadow-[0_10px_40px_-12px_rgba(183,43,202,0.7)] transition-shadow duration-500 hover:shadow-[0_0_40px_rgba(233,110,216,0.8)]"
     >
       <span className="absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/25 blur-sm transition-[left] duration-700 ease-cinematic group-hover:left-[120%]" />
-      <span className="relative">Start The Project</span>
+      <span className="relative">{cta.label}</span>
     </Link>
   );
 }
@@ -131,7 +145,17 @@ const fadeUp: Variants = {
 
 /* ───────────────────────── Section ───────────────────────── */
 
-export default function LetsBuild() {
+export default function LetsBuild({
+  id = "lets-build",
+  lines = ["Let’s Build", "Something."],
+  headlineSize = 4.2,
+  accent,
+  paragraph = "Have A Brand To Build, A Product To Launch, Or An Experience To Create? Let's Make It Happen.",
+  cta,
+  servicesHref = "/#services",
+}: Props = {}) {
+  const PARAGRAPH = paragraph.split(" ");
+  const titleId = `${id}-title`;
   const sectionRef = useRef<HTMLElement>(null);
   const reduce = !!useReducedMotion();
   const [desktop, setDesktop] = useState(false);
@@ -175,14 +199,14 @@ export default function LetsBuild() {
 
   const headline = (
     <motion.h2
-      id="build-title"
+      id={titleId}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-15%" }}
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }}
       className="font-display font-bold uppercase leading-[1.02]"
     >
-      {["Let’s Build", "Something."].map((l) => (
+      {lines.map((l) => (
         <span key={l} className="block overflow-hidden pb-1">
           <motion.span
             className="block"
@@ -196,7 +220,7 @@ export default function LetsBuild() {
   );
 
   return (
-    <section ref={sectionRef} id="lets-build" aria-labelledby="build-title" className="relative overflow-hidden">
+    <section ref={sectionRef} id={id} aria-labelledby={titleId} className="relative overflow-hidden">
       <motion.div
         aria-hidden
         style={{ opacity: glow }}
@@ -218,6 +242,13 @@ export default function LetsBuild() {
             <path d={RIGHT_LINE} fill="none" stroke="#3a1660" strokeOpacity={0.3} />
             <motion.path d={LEFT_LINE} fill="none" stroke="url(#build-line)" strokeWidth={1.4} style={{ pathLength: lineL }} />
             <motion.path d={RIGHT_LINE} fill="none" stroke="url(#build-line)" strokeWidth={1.4} style={{ pathLength: lineR }} />
+            {accent && (
+              <>
+                <path d={BRANCH_LINE} fill="none" stroke="#3a1660" strokeOpacity={0.3} />
+                <motion.path d={BRANCH_LINE} fill="none" stroke="url(#build-line)" strokeWidth={1.4} style={{ pathLength: lineR }} />
+                <motion.circle cx={1408} cy={406} r={6} fill="#7a2bc0" style={{ opacity: dotsR }} />
+              </>
+            )}
             {[
               [515, 371, dotsL],
               [776, 513, dotsL],
@@ -241,9 +272,17 @@ export default function LetsBuild() {
           </svg>
 
           {/* Headline */}
-          <div className="absolute text-[4.2cqw]" style={{ left: X(320), top: Y(215) }}>
+          <div className="absolute" style={{ left: X(320), top: Y(accent ? 262 : 215), fontSize: `${headlineSize}cqw` }}>
             {headline}
           </div>
+          {accent && (
+            <motion.p
+              className="absolute whitespace-nowrap font-display text-[2.2cqw] font-bold uppercase leading-none text-primary drop-shadow-[0_0_24px_rgba(233,224,42,0.25)]"
+              style={{ right: X(386), top: Y(276), opacity: btnRight, x: btnRightX }}
+            >
+              {accent}
+            </motion.p>
+          )}
 
           {/* Flower + badge */}
           <motion.div className="absolute" style={{ left: X(790), top: Y(343), width: X(340), aspectRatio: "1", x: fx, y: fy }}>
@@ -255,10 +294,10 @@ export default function LetsBuild() {
 
           {/* Buttons */}
           <motion.div className="absolute" style={{ left: X(1270), top: Y(342), opacity: btnRight, x: btnRightX }}>
-            <GradientBorderPill href="#services">Explore Our Service</GradientBorderPill>
+            <GradientBorderPill href={servicesHref}>Explore Our Service</GradientBorderPill>
           </motion.div>
           <motion.div className="absolute" style={{ left: X(385), top: Y(646), opacity: btnLeft, y: btnLeftY }}>
-            <StartButton />
+            <StartButton cta={cta} />
           </motion.div>
 
           {/* Paragraph lights up after the right line lands */}
@@ -270,7 +309,8 @@ export default function LetsBuild() {
         </div>
       ) : (
         <div className="container-site relative py-24">
-          <div className="text-[clamp(2.75rem,10vw,4rem)]">{headline}</div>
+          <div className={accent ? "text-[clamp(2rem,7.5vw,3rem)]" : "text-[clamp(2.75rem,10vw,4rem)]"}>{headline}</div>
+          {accent && <p className="mt-4 font-display text-[clamp(2rem,7.5vw,3rem)] font-bold uppercase leading-[1.02] text-primary">{accent}</p>}
           <div className="relative mx-auto my-12 aspect-square w-[min(80vw,360px)]">
             <motion.div className="absolute inset-0">
               <Flower progress={progress} reduce={reduce} />
@@ -292,10 +332,10 @@ export default function LetsBuild() {
             className="mt-10 flex flex-wrap gap-4"
           >
             <motion.div variants={fadeUp}>
-              <StartButton />
+              <StartButton cta={cta} />
             </motion.div>
             <motion.div variants={fadeUp}>
-              <GradientBorderPill href="#services">Explore Our Service</GradientBorderPill>
+              <GradientBorderPill href={servicesHref}>Explore Our Service</GradientBorderPill>
             </motion.div>
           </motion.div>
         </div>
