@@ -13,13 +13,11 @@ export const siteConfig = {
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Al+Zarouni+Business+Center+Al+Barsha+1+Dubai",
   },
   /**
-   * Where career applications are sent. Any form service that accepts multipart POST works
-   * (e.g. Formspree "https://formspree.io/f/xxxx", Web3Forms, or your own API route).
-   * Leave empty to fall back to opening the visitor's email app.
+   * Form handlers (our own API routes, which email the submission through Resend).
+   * Recipients and the API key are set in environment variables — see src/lib/server/mail.ts.
    */
-  careersFormEndpoint: "",
-  /** Where "Start The Project" enquiries are sent (same options as above). Empty → opens the email app. */
-  enquiryFormEndpoint: "",
+  careersFormEndpoint: "/api/careers",
+  enquiryFormEndpoint: "/api/enquiry",
   careersEmail: "careers@hushlushtechnologies.com", // TODO: confirm
   socials: {
     instagram: "",

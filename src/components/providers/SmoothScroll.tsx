@@ -4,16 +4,18 @@ import { useEffect, type ReactNode } from "react";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { isLite } from "@/lib/perf";
+import OffscreenPause from "@/components/providers/OffscreenPause";
 
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * Lenis smooth scroll, synced with GSAP ScrollTrigger.
- * Disabled automatically for users who prefer reduced motion.
+ * Lenis smooth scroll (desktop only), synced with GSAP ScrollTrigger.
+ * Phones/touch devices use native scrolling (already smooth, and cheaper).
  */
 export default function SmoothScroll({ children }: { children: ReactNode }) {
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isLite()) return;
 
     const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1 });
     lenis.on("scroll", ScrollTrigger.update);
@@ -28,5 +30,10 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      <OffscreenPause />
+      {children}
+    </>
+  );
 }

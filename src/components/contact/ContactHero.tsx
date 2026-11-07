@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform, type Variants } from "motion/react";
 import { useIntroReady } from "@/lib/intro";
 import { ArrowRight } from "@/components/ui/icons";
+import { isLite } from "@/lib/perf";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -22,7 +23,7 @@ function Particles({ active }: { active: boolean }) {
 
   useEffect(() => {
     const c = ref.current;
-    if (!c || !active || reduce) return;
+    if (!c || !active || reduce || isLite()) return;
     let raf = 0;
     let visible = true;
     const io = new IntersectionObserver(([e]) => {

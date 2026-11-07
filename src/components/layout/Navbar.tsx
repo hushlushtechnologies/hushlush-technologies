@@ -63,7 +63,7 @@ export default function Navbar() {
           className={cn(
             "absolute inset-0 border-b transition-all duration-500",
             scrolled || servicesOpen
-              ? "border-white/5 bg-background/70 backdrop-blur-xl"
+              ? "border-white/5 bg-background/95 lg:bg-background/70 backdrop-blur-xl"
               : "border-transparent bg-transparent"
           )}
         />

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { isLite } from "@/lib/perf";
 
 /**
  * Real-time rotating globe drawn on the GPU (WebGL).
@@ -86,6 +87,7 @@ export default function RotatingEarth({ className }: { className?: string }) {
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
+    if (isLite()) return; // phones: static globe
 
     const gl = canvas.getContext("webgl", { premultipliedAlpha: false, antialias: false, alpha: true });
     if (!gl) return; // keep SVG fallback

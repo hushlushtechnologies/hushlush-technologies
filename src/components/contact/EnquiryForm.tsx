@@ -79,6 +79,7 @@ export default function EnquiryForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [service, setService] = useState("");
   const [filled, setFilled] = useState(0);
+  const [serverMsg, setServerMsg] = useState("");
 
   // card rises and un-tilts as it scrolls in
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "start 0.2"] });
@@ -111,33 +112,23 @@ export default function EnquiryForm() {
     }
 
     setStatus("sending");
-    const endpoint = siteConfig.enquiryFormEndpoint;
-    if (!endpoint) {
-      // No form service configured yet → open the visitor's email app with everything filled in
-      const lines = [
-        `Name: ${name}`,
-        `Email: ${email}`,
-        `Phone / WhatsApp: ${phone}`,
-        `Company: ${fd.get("company") || "-"}`,
-        `Website: ${fd.get("website") || "-"}`,
-        `Service: ${service || "-"}`,
-        "",
-        String(fd.get("message") ?? ""),
-      ];
-      window.location.href = `mailto:${siteConfig.contact.email}?subject=${encodeURIComponent(`Project Enquiry — ${name}`)}&body=${encodeURIComponent(lines.join("\n"))}`;
-      setStatus("sent");
-      return;
-    }
+    setServerMsg("");
     try {
-      const res = await fetch(endpoint, { method: "POST", body: fd, headers: { Accept: "application/json" } });
-      setStatus(res.ok ? "sent" : "error");
+      const res = await fetch(siteConfig.enquiryFormEndpoint, { method: "POST", body: fd, headers: { Accept: "application/json" } });
+      const data: { error?: string; errors?: Record<string, string> } = await res.json().catch(() => ({}));
       if (res.ok) {
+        setStatus("sent");
         formRef.current?.reset();
         setService("");
         setFilled(0);
+      } else {
+        setStatus("error");
+        if (data.errors) setErrors(data.errors);
+        setServerMsg(data.error ?? "Something went wrong. Please try again.");
       }
     } catch {
       setStatus("error");
+      setServerMsg("Network error — please check your connection and try again.");
     }
   };
 
@@ -290,6 +281,15 @@ export default function EnquiryForm() {
                     )}
                   </AnimatePresence>
                 </button>
+                <AnimatePresence>
+                  {status === "error" && serverMsg && (
+                    <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="alert" className="mt-4 text-sm text-grad-start">
+                      {serverMsg}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+                {/* spam trap — hidden from people, bots fill it */}
+                <input type="text" name="website_url" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-px opacity-0" />
                 <p className="mt-12 text-sm leading-snug text-text-primary/60">
                   By clicking “Send Enquiry,” you agree to be contacted by {siteConfig.name} regarding your enquiry. Your information will be handled in
                   accordance with our Privacy Policy.
@@ -299,7 +299,7 @@ export default function EnquiryForm() {
 
             {/* success state */}
             <AnimatePresence>
-              {status === "sent" && siteConfig.enquiryFormEndpoint && (
+              {status === "sent" && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { MotionValue } from "motion/react";
 import { cn } from "@/lib/utils";
+import { isLite } from "@/lib/perf";
 
 /**
  * 3D cinema camera (WebGL / three.js).
@@ -93,6 +94,7 @@ export function DepthModel({ progress, className, config }: Props & { config: De
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
     if (!wrap || !canvas) return;
+    if (isLite()) return; // phones: keep the static image (no WebGL while scrolling)
 
     let disposed = false;
     let raf = 0;

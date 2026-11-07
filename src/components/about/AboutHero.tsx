@@ -14,6 +14,7 @@ import {
 import { DepthModel, type DepthModelConfig } from "@/components/three/DepthModel";
 import { useIntroReady } from "@/lib/intro";
 import { ArrowRight } from "@/components/ui/icons";
+import { isLite } from "@/lib/perf";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -87,7 +88,7 @@ function ShardField({ progress, intro, mx, my }: { progress: MotionValue<number>
 
   useEffect(() => {
     const c = ref.current;
-    if (!c) return;
+    if (!c || isLite()) return;
     let raf = 0;
     let visible = true;
     const io = new IntersectionObserver(([e]) => {

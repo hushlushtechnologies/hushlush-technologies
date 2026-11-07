@@ -21,19 +21,20 @@ const CRYSTALS = [
 ];
 
 const TAGS = [
-  { label: "The Thinking", x: 324, y: 70, rot: -12, depth: 0.7 },
-  { label: "The Making", x: 662, y: 20, rot: 12, depth: 0.5 },
-  { label: "The Collaboration", x: 1148, y: 0, rot: 7, depth: 0.6 },
+  { label: "The Thinking", x: 324, y: 100, rot: -12, depth: 0.7 },
+  { label: "The Making", x: 662, y: 56, rot: 12, depth: 0.5 },
+  { label: "The Collaboration", x: 1148, y: 44, rot: 7, depth: 0.6 },
   { label: "The Building", x: 920, y: 270, rot: -12, depth: 0.9 },
   { label: "The Result", x: 1414, y: 168, rot: -16, depth: 0.8 },
 ];
 
 function Crystal({ c, progress, i }: { c: (typeof CRYSTALS)[number]; progress: MotionValue<number>; i: number }) {
   const reduce = useReducedMotion();
-  const start = c.delay;
-  const y = useTransform(progress, [start, start + 0.45, 1], reduce ? ["0%", "0%", "0%"] : ["70%", "0%", `${-12 * c.depth}%`]);
+  // everything settles by ~0.38 — i.e. while the whole band is on screen
+  const start = c.delay * 0.5;
+  const y = useTransform(progress, [start, start + 0.27, 1], reduce ? ["0%", "0%", "0%"] : ["70%", "0%", `${-12 * c.depth}%`]);
   const rotate = useTransform(progress, [start, 1], reduce ? [c.rot, c.rot] : [c.rot + (i % 2 ? 25 : -25), c.rot - (i % 2 ? 8 : -8)]);
-  const opacity = useTransform(progress, [start, start + 0.25], [0, 1]);
+  const opacity = useTransform(progress, [start, start + 0.18], [0, 1]);
   return (
     <motion.div
       aria-hidden
@@ -49,9 +50,9 @@ function Crystal({ c, progress, i }: { c: (typeof CRYSTALS)[number]; progress: M
 
 function Tag({ t, i, progress }: { t: (typeof TAGS)[number]; i: number; progress: MotionValue<number> }) {
   const reduce = useReducedMotion();
-  const a = 0.2 + i * 0.07;
-  const k = useTransform(progress, [a, a + 0.14], [0, 1]);
-  const y = useTransform(progress, [a, a + 0.14, 1], reduce ? [0, 0, 0] : [80, 0, -60 * t.depth]);
+  const a = 0.08 + i * 0.04;
+  const k = useTransform(progress, [a, a + 0.11], [0, 1]);
+  const y = useTransform(progress, [a, a + 0.11, 1], reduce ? [0, 0, 0] : [80, 0, -24 * t.depth]);
   const scale = useTransform(k, [0, 1], [0.5, 1]);
   const rotate = useTransform(k, [0, 1], [t.rot + (i % 2 ? -30 : 30), t.rot]);
   const filter = useTransform(k, (v) => `blur(${(1 - v) * 8}px)`);

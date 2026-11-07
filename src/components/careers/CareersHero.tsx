@@ -230,13 +230,13 @@ export default function CareersHero() {
           <Spark progress={progress} at={[950, 500]} />
         </div>
 
-        {/* Paragraph + CTA */}
+        {/* Paragraph + CTA — on desktop placed in stage coordinates, just below "Next Chapter" */}
         <motion.div
           initial="hidden"
           animate={show}
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.15, delayChildren: 1.6 } } }}
           style={{ opacity: textOpacity }}
-          className="container-site relative z-40 -mt-6 pb-16 lg:absolute lg:inset-x-0 lg:bottom-[12vh] lg:mt-0 lg:flex lg:flex-col lg:items-end lg:pb-0"
+          className="relative z-40 mx-auto -mt-6 w-full max-w-[1440px] px-[clamp(1.25rem,5.5vw,5rem)] pb-16 lg:absolute lg:right-[calc(50vw_-_max(100vw,177.78dvh)*0.3323)] lg:top-[calc(50dvh_+_max(100vw,177.78dvh)*0.1302)] lg:m-0 lg:w-[272px] lg:max-w-none lg:px-0 lg:pb-0"
         >
           <motion.p variants={fadeUp} className="max-w-[300px] text-sm leading-[1.1] text-text-primary/90 lg:w-[272px] lg:text-[15px]">
             Join A Team Of Strategists, Creators And Technologists Building The Brands, Experiences And Products Of What&rsquo;s Next.

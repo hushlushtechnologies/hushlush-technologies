@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion, useTransform, type MotionValue } from "motion/react";
 import { DepthModel, type DepthModelConfig } from "@/components/three/DepthModel";
+import { isLite } from "@/lib/perf";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -50,7 +51,7 @@ function Glyphs({ active }: { active: boolean }) {
   const reduce = useReducedMotion();
   useEffect(() => {
     const c = ref.current;
-    if (!c || !active || reduce) return;
+    if (!c || !active || reduce || isLite()) return;
     const ctx = c.getContext("2d");
     if (!ctx) return;
     const chars = "01{}<>/=;()[]#$&*+".split("");

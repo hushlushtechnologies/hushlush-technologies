@@ -56,7 +56,9 @@ function StepCard({
   const body = (
     <div
       className={cn(
-        "relative h-full overflow-hidden rounded-[18px] border bg-[#0f0b14]/95 px-4 py-[18px] backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-700",
+        "relative h-full overflow-hidden rounded-[18px] border bg-[#0f0b14]/95 backdrop-blur-md",
+        desktop ? "px-[1.25cqw] py-[1.4cqw]" : "px-4 py-[18px]",
+        " transition-[border-color,box-shadow,background-color] duration-700",
         active
           ? "border-transparent shadow-[0_24px_70px_-25px_rgba(183,43,202,0.85)] [background:linear-gradient(#120c19,#120c19)_padding-box,linear-gradient(270deg,#E96ED8,#B72BCA_50.12%,#62229D)_border-box]"
           : "border-white/[0.07]",
@@ -70,13 +72,13 @@ function StepCard({
           active ? "opacity-100 motion-safe:animate-[sweep_3.5s_ease-in-out_infinite]" : "opacity-0",
         )}
       />
-      <p className="relative flex items-center gap-2 font-display text-lg font-medium text-primary">
+      <p className={cn("relative flex items-center gap-2 font-display font-medium text-primary", desktop ? "text-[1.4cqw]" : "text-lg")}>
         {String(i + 1).padStart(2, "0")}
         <span className={cn("h-px origin-left bg-primary/60 transition-[width] duration-700", active ? "w-10" : "w-0")} />
       </p>
-      <h3 className="relative mt-1 font-display text-[clamp(1.5rem,2.2cqw,1.75rem)] font-bold leading-tight">{step.title}</h3>
-      <p className="relative mt-2 text-base text-text-primary/55">{step.tagline}</p>
-      <p className={cn("relative mt-4 text-base leading-[1.1] transition-colors duration-500", active || done ? "text-text-primary" : "text-text-primary/70")}>{step.text}</p>
+      <h3 className={cn("relative mt-1 font-display font-bold leading-tight", desktop ? "text-[2.2cqw]" : "text-2xl")}>{step.title}</h3>
+      <p className={cn("relative mt-2 text-text-primary/55", desktop ? "text-[1.25cqw]" : "text-base")}>{step.tagline}</p>
+      <p className={cn("relative mt-4 leading-[1.1] transition-colors duration-500", desktop ? "text-[1.25cqw]" : "text-base", active || done ? "text-text-primary" : "text-text-primary/70")}>{step.text}</p>
     </div>
   );
 
@@ -110,7 +112,7 @@ export default function ServiceProcess({ data }: { data: NonNullable<ServicePage
   const [active, setActive] = useState(-1);
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1280px) and (min-height: 700px)");
+    const mq = window.matchMedia("(min-width: 1280px) and (min-height: 760px)");
     const on = () => setDesktop(mq.matches);
     const raf = requestAnimationFrame(on);
     mq.addEventListener("change", on);

@@ -8,7 +8,7 @@ import { JOBS, type Job } from "@/lib/jobs";
 import { ArrowRight, ChevronDown } from "@/components/ui/icons";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const MAX_MB = 5;
+const MAX_MB = 4; // server + hosting limit (Vercel accepts ~4.5 MB per request)
 
 /* ───────────────────────── Icons ───────────────────────── */
 
@@ -145,6 +145,7 @@ export default function OpenPositions() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
   const [flash, setFlash] = useState(false);
+  const [serverMsg, setServerMsg] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -184,26 +185,24 @@ export default function OpenPositions() {
     if (file) fd.set("resume", file);
     fd.set("role", role || "General Application");
 
-    const endpoint = siteConfig.careersFormEndpoint;
-    if (!endpoint) {
-      // No form service configured yet → open the visitor's email app with the details
-      const body = encodeURIComponent(
-        `Name: ${name}\nEmail: ${email}\nPhone: +971 ${phone}\nRole: ${role || "General"}\n\n${fd.get("message") ?? ""}\n\n(Please attach your resume: ${file?.name})`
-      );
-      window.location.href = `mailto:${siteConfig.careersEmail}?subject=${encodeURIComponent(`Application — ${role || "General"}`)}&body=${body}`;
-      setStatus("sent");
-      return;
-    }
+    setServerMsg("");
     try {
-      const res = await fetch(endpoint, { method: "POST", body: fd, headers: { Accept: "application/json" } });
-      setStatus(res.ok ? "sent" : "error");
+      const res = await fetch(siteConfig.careersFormEndpoint, { method: "POST", body: fd, headers: { Accept: "application/json" } });
+      const data: { error?: string; errors?: Record<string, string> } = await res.json().catch(() => ({}));
       if (res.ok) {
+        setStatus("sent");
         formRef.current?.reset();
         setFile(null);
         setRole("");
+        setTimeout(() => setStatus("idle"), 6000);
+      } else {
+        setStatus("error");
+        if (data.errors) setErrors(data.errors);
+        setServerMsg(data.error ?? "Something went wrong. Please try again.");
       }
     } catch {
       setStatus("error");
+      setServerMsg("Network error — please check your connection and try again.");
     }
   };
 
@@ -349,6 +348,21 @@ export default function OpenPositions() {
                 </motion.span>
               </AnimatePresence>
             </button>
+            <AnimatePresence>
+              {(status === "sent" || serverMsg) && (
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  role="status"
+                  className={cn("mt-4 text-sm", status === "sent" ? "text-primary" : "text-grad-start")}
+                >
+                  {status === "sent" ? "Thank you! Your application has been sent — our team will be in touch." : serverMsg}
+                </motion.p>
+              )}
+            </AnimatePresence>
+            {/* spam trap — hidden from people, bots fill it */}
+            <input type="text" name="website_url" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-px opacity-0" />
             <p className="mt-5 text-sm leading-snug text-text-primary/70">
               By clicking <span className="font-semibold text-text-primary">“Apply,”</span> you agree to our Privacy Policy and consent to being contacted regarding your enquiry.
             </p>

@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   type ReactNode,
   type PointerEvent,
@@ -20,6 +21,7 @@ import {
   type Variants,
 } from "motion/react";
 import { cn } from "@/lib/utils";
+import { isLite } from "@/lib/perf";
 
 export const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -122,9 +124,13 @@ export function BentoCard({
     ref.current?.style.setProperty("--my", `${yv * 100}%`);
   };
 
-  // Idle roaming light (runs only while visible and not hovered)
+  // Idle roaming light (runs only while visible and not hovered; skipped on phones)
+  const lite = useRef(false);
+  useEffect(() => {
+    lite.current = isLite();
+  }, []);
   useAnimationFrame((t) => {
-    if (reduce || hovering.current || !inView) return;
+    if (reduce || lite.current || hovering.current || !inView) return;
     const s = (t / 1000) * 0.35 + phase;
     const x = 0.5 + 0.38 * Math.sin(s);
     const yv = 0.5 + 0.32 * Math.sin(s * 1.3 + 1);

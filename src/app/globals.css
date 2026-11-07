@@ -113,6 +113,32 @@
   footer {
     overflow-x: clip;
   }
+  /* Phones/touch: blur filters are the most expensive thing to repaint while scrolling.
+     Glows are radial gradients, so they stay soft without them. */
+  @media (max-width: 1023px), (pointer: coarse) {
+    [style*="blur("],
+    .blur-sm,
+    .blur-md,
+    .blur-lg,
+    .blur-xl,
+    .blur-2xl,
+    .blur-3xl {
+      filter: none !important;
+    }
+    [class*="shadow-[0_"] {
+      box-shadow: none !important;
+    }
+    [class*="backdrop-blur"] {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+  }
+  /* see OffscreenPause.tsx */
+  .is-offscreen *,
+  .is-offscreen *::before,
+  .is-offscreen *::after {
+    animation-play-state: paused !important;
+  }
   ::selection {
     background: var(--color-grad-mid);
     color: var(--color-text-primary);

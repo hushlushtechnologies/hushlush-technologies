@@ -154,7 +154,7 @@ function CardBody({ r, compact }: { r: Reason; compact?: boolean }) {
       <p
         className={cn(
           "font-display font-medium text-primary",
-          compact ? "text-base" : "text-[max(13px,0.95cqw)]",
+          compact ? "text-base" : "text-[0.95cqw]",
         )}
       >
         {r.no}
@@ -162,7 +162,7 @@ function CardBody({ r, compact }: { r: Reason; compact?: boolean }) {
       <h3
         className={cn(
           "mt-1 font-display font-semibold leading-tight text-text-primary",
-          compact ? "text-2xl" : "text-[max(17px,1.4cqw)]",
+          compact ? "text-2xl" : "text-[1.4cqw]",
         )}
       >
         {r.title}
@@ -170,7 +170,7 @@ function CardBody({ r, compact }: { r: Reason; compact?: boolean }) {
       <p
         className={cn(
           "mt-2 uppercase tracking-wide text-text-primary/55",
-          compact ? "text-sm" : "text-[max(11px,0.8cqw)]",
+          compact ? "text-sm" : "text-[0.8cqw]",
         )}
       >
         {r.kicker}
@@ -178,7 +178,7 @@ function CardBody({ r, compact }: { r: Reason; compact?: boolean }) {
       <p
         className={cn(
           "mt-3 leading-[1.08] text-text-primary/90",
-          compact ? "text-base" : "text-[max(12px,0.86cqw)]",
+          compact ? "text-base" : "text-[0.86cqw]",
         )}
       >
         {r.body}
@@ -354,7 +354,7 @@ function DesktopStage({
         className="absolute left-1/2 top-[calc(50%+42px)] -translate-x-1/2 -translate-y-1/2 [container-type:size]"
         style={
           {
-            width: `min(100vw, (100dvh - 120px) * ${FW / FH})`,
+            width: `min(100vw, (100dvh - 96px) * ${FW / FH})`,
             aspectRatio: `${FW} / ${FH}`,
           } as CSSProperties
         }
@@ -503,12 +503,16 @@ export default function WhyUs({ config }: { config?: StageConfig } = {}) {
 
   const [desktop, setDesktop] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setDesktop(mq.matches);
+    // The pinned stage keeps the Figma proportions, so its text scales with it.
+    // When the window is too short for the stage to be readable (< 1100px wide), use the stacked layout.
+    const update = () => {
+      const stageW = Math.min(window.innerWidth, (window.innerHeight - 96) * (FW / cfg.fh));
+      setDesktop(window.innerWidth >= 1024 && stageW >= 1100);
+    };
     update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [cfg.fh]);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
