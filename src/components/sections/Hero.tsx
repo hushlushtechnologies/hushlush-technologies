@@ -192,7 +192,10 @@ const socials = [
     Icon: Facebook,
     area: "col-start-2 row-start-3",
   },
-];
+]
+  .filter((x) => x.href) // only accounts that exist
+  // with just two accounts, sit them above and below the logo so the cluster stays symmetrical
+  .map((x, i, arr) => (arr.length === 2 ? { ...x, area: i === 0 ? "col-start-2 row-start-1" : "col-start-2 row-start-3" } : x));
 
 function SocialCluster() {
   const ready = useIntroReady();

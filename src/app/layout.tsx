@@ -64,6 +64,8 @@ const orgSchema = {
     addressLocality: "Al Barsha 1, Dubai",
     addressCountry: "AE",
   },
+  hasMap: siteConfig.contact.mapUrl,
+  sameAs: Object.values(siteConfig.socials).filter(Boolean),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

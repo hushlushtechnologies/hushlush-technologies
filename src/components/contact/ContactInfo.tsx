@@ -32,9 +32,7 @@ const ITEMS: Item[] = [
   { Icon: Pin, title: "Visit Us", value: siteConfig.contact.address, href: siteConfig.contact.mapUrl, external: true },
 ];
 
-const MAP_EMBED = `https://maps.google.com/maps?q=${encodeURIComponent(
-  "Al Zarouni Business Center, Al Barsha 1, Dubai",
-)}&z=13&output=embed`;
+const MAP_EMBED = siteConfig.contact.mapEmbed;
 
 /* ───────────────────────── Card ───────────────────────── */
 
@@ -199,13 +197,6 @@ export default function ContactInfo() {
             {/* brand tint + edge vignette */}
             <div aria-hidden className="pointer-events-none absolute inset-0 bg-[#2a0b45] mix-blend-color opacity-40" />
             <div aria-hidden className="pointer-events-none absolute inset-0 shadow-[inset_0_0_50px_10px_rgba(6,5,8,0.6)]" />
-
-            {/* location beacon */}
-            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <span className="absolute left-1/2 top-1/2 size-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-grad-start/40 motion-safe:animate-[ping_2.6s_cubic-bezier(0,0,0.2,1)_infinite]" />
-              <span className="absolute left-1/2 top-1/2 size-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-grad-mid/25 blur-md" />
-              <span className="relative block size-4 rounded-full bg-brand-gradient shadow-[0_0_20px_6px_rgba(233,110,216,0.7)] ring-4 ring-white/15" />
-            </div>
 
             {/* scan line while it powers on */}
             <motion.div

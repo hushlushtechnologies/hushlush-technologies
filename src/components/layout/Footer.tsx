@@ -34,7 +34,7 @@ const MEDIA = [
   { label: "Facebook", Icon: Facebook, href: siteConfig.socials.facebook },
   { label: "TikTok", Icon: Tiktok, href: siteConfig.socials.tiktok },
   { label: "YouTube", Icon: Youtube, href: siteConfig.socials.youtube },
-];
+].filter((m) => m.href); // only show accounts that exist
 
 /* ───────────────────────── Icons for contact ───────────────────────── */
 

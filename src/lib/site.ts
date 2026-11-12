@@ -10,7 +10,10 @@ export const siteConfig = {
     phone: "+971 54 232 21279",
     email: "marketing@hushlushtechnologies.com", // TODO: confirm — design shows no domain ending
     address: "Office No. 501 Al Zarouni Business Center, Al Barsha 1, Sheikh Zayed Road, Dubai",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=Al+Zarouni+Business+Center+Al+Barsha+1+Dubai",
+    // Opens the "Hushlush Technologies" listing in Google Maps
+    mapUrl: "https://maps.google.com/?cid=4215061153504247635",
+    mapEmbed:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d903.1949364739062!2d55.183791920834395!3d25.109316088807127!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f6baf3a249629%3A0x3a7ee7c9692b3f53!2sHushlush%20Technologies!5e0!3m2!1sen!2sin!4v1794488212287!5m2!1sen!2sin",
   },
   /**
    * Form handlers (our own API routes, which email the submission through Resend).
@@ -20,9 +23,9 @@ export const siteConfig = {
   enquiryFormEndpoint: "/api/enquiry",
   careersEmail: "careers@hushlushtechnologies.com", // TODO: confirm
   socials: {
-    instagram: "",
-    youtube: "",
-    tiktok: "",
-    facebook: "",
+    instagram: "https://www.instagram.com/hushlush_technologies",
+    youtube: "https://www.youtube.com/@HUSHLUSHTECH",
+    tiktok: "https://www.tiktok.com/@hushlushtechnologies",
+    facebook: "https://www.facebook.com/share/1HHN48L9Pk/",
   },
 };
