@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/site";
 import { JOBS, type Job } from "@/lib/jobs";
 import { ArrowRight, ChevronDown } from "@/components/ui/icons";
+import { normalizeUaePhone, UAE_PHONE_ERROR } from "@/lib/phone";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const MAX_MB = 4; // server + hosting limit (Vercel accepts ~4.5 MB per request)
@@ -173,10 +174,10 @@ export default function OpenPositions() {
     const next: Record<string, string> = {};
     const name = String(fd.get("name") ?? "").trim();
     const email = String(fd.get("email") ?? "").trim();
-    const phone = String(fd.get("phone") ?? "").replace(/[\s-]/g, "");
+    const phone = String(fd.get("phone") ?? "");
     if (name.length < 2) next.name = "Please enter your full name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "Please enter a valid email address.";
-    if (!/^\+?\d{7,15}$/.test(phone)) next.phone = "Please enter a valid phone number.";
+    if (!normalizeUaePhone(phone)) next.phone = UAE_PHONE_ERROR;
     if (!file) next.resume = "Please upload your resume.";
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -267,7 +268,7 @@ export default function OpenPositions() {
 
           <Field label="Phone Number (+971)" required htmlFor="ap-phone" error={errors.phone}>
             <div className="relative">
-              <input id="ap-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="Enter your Phone Number" className={cn(inputBase, "rounded-full pr-12")} aria-invalid={!!errors.phone} />
+              <input id="ap-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+971 50 123 4567" className={cn(inputBase, "rounded-full pr-12")} aria-invalid={!!errors.phone} />
               <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-text-primary/70">
                 <Glyph d={I.phone} />
               </span>

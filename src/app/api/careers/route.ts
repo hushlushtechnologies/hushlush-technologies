@@ -1,4 +1,4 @@
-import { clientIp, field, isEmail, isPhone, json, rateLimited, sendMail, table, textBody } from "@/lib/server/mail";
+import { clientIp, field, isEmail, json, normalizeUaePhone, UAE_PHONE_ERROR, rateLimited, sendMail, table, textBody } from "@/lib/server/mail";
 
 
 // Vercel caps a request at ~4.5 MB, so keep the resume a bit under that.
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const name = field(fd, "name", 120);
   const email = field(fd, "email", 160);
-  const phone = field(fd, "phone", 40);
+  const phone = normalizeUaePhone(field(fd, "phone", 40)) ?? "";
   const role = field(fd, "role", 120) || "General Application";
   const message = field(fd, "message", 4000);
   const resume = fd.get("resume");
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const errors: Record<string, string> = {};
   if (name.length < 2) errors.name = "Please enter your full name.";
   if (!isEmail(email)) errors.email = "Please enter a valid email address.";
-  if (!isPhone(phone)) errors.phone = "Please enter a valid phone number.";
+  if (!phone) errors.phone = UAE_PHONE_ERROR;
   if (!(resume instanceof File) || resume.size === 0) errors.resume = "Please upload your resume.";
   else if (resume.size > MAX_BYTES) errors.resume = "Resume must be 4 MB or smaller.";
   if (Object.keys(errors).length) return json({ error: "Please check the highlighted fields.", errors }, 400);

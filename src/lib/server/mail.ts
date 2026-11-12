@@ -47,6 +47,7 @@ export const field = (fd: FormData, name: string, max = 200) => String(fd.get(na
 
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 export const isPhone = (v: string) => /^\+?\d{7,15}$/.test(v.replace(/[\s()-]/g, ""));
+export { normalizeUaePhone, UAE_PHONE_ERROR } from "@/lib/phone";
 
 /** Email body: a simple branded table of label → value rows */
 export function table(title: string, rows: [string, string][], note?: string) {
